@@ -1,24 +1,35 @@
-import { ApolloClient } from "apollo-client";
-import { ApolloLink } from "apollo-link";
-import { HttpLink } from "apollo-link-http";
-import { InMemoryCache } from "apollo-cache-inmemory";
+import React, { Component } from "react";
+import { ApolloProvider } from "react-apollo";
+import gql from "graphql-tag";
+import { Query } from "react-apollo";
+import client from "./client";
 
-const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
+const ME = gql`
+  query me {
+    user(login: "iteachonudemy") {
+      name
+      avatarUrl
+    }
+  }
+`;
 
-const headersLink = new ApolloLink((operation, forward) => {
-  operation.setContext({
-    headers: {
-      Authorization: `Bearer ${GITHUB_TOKEN}`,
-    },
-  });
-  return forward(operation);
-});
+class App extends Component {
+  render() {
+    return (
+      <ApolloProvider client={client}>
+        <div>Hello, GraphQL</div>
 
-const endpoint = "https://api.github.com/graphql";
-const httpLink = new HttpLink({ uri: endpoint });
-const link = ApolloLink.from([headersLink, httpLink]);
+        <Query query={ME}>
+          {({ loading, error, data }) => {
+            if (loading) return "Loading...";
+            if (error) return `Error! ${error.message}`;
 
-export default new ApolloClient({
-  link,
-  cache: new InMemoryCache(),
-});
+            return <div>{data.user.name}</div>;
+          }}
+        </Query>
+      </ApolloProvider>
+    );
+  }
+}
+
+export default App;
